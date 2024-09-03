@@ -19,13 +19,13 @@ pub struct StatelessClient {
 impl StatelessClient {
     pub fn new(headers: HeaderMap) -> Self {
         let client = reqwest::Client::builder()
-            .user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:60.1) Gecko/20100101 Firefox/60.1")
+            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .default_headers(headers)
             // .timeout(Duration::new(60, 0))
             .connect_timeout(Duration::from_secs(60))
             .build()
             .unwrap();
-        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(5);
+        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(10);
         let client_with_middleware = ClientBuilder::new(client.clone())
             // Retry failed requests.
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -72,7 +72,7 @@ impl StatefulClient {
             client: reqwest::Client::builder()
                 .cookie_provider(std::sync::Arc::clone(&cookie_store))
                 .user_agent(
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/63.0.3239.108",
+                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
                 )
                 .default_headers(headers)
                 .connect_timeout(Duration::from_secs(60))

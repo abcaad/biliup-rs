@@ -9,6 +9,9 @@ use std::str::FromStr;
 use std::time::Duration;
 use tracing::info;
 use typed_builder::TypedBuilder;
+use reqwest_middleware::ClientBuilder;
+use reqwest_retry::policies::ExponentialBackoff;
+use reqwest_retry::RetryTransientMiddleware;
 
 #[derive(clap::Args, Serialize, Deserialize, Debug, TypedBuilder)]
 #[builder(field_defaults(default))]
@@ -228,10 +231,14 @@ pub struct BiliBili {
 
 impl BiliBili {
     pub async fn submit(&self, studio: &Studio) -> Result<ResponseData> {
-            let ret: ResponseData = reqwest::Client::builder()
-                .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/63.0.3239.108")
+            let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+            let client = reqwest::Client::builder()
+                .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
                 .timeout(Duration::new(60, 0))
-                .build()?
+                .build()?;
+            let ret: ResponseData = ClientBuilder::new(client)
+                .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+                .build()
                 .post(format!(
                     "http://member.bilibili.com/x/vu/client/add?access_key={}",
                     self.login_info.token_info.access_token
@@ -294,7 +301,7 @@ impl BiliBili {
 
     pub async fn edit(&self, studio: &Studio) -> Result<serde_json::Value> {
         let ret: serde_json::Value = reqwest::Client::builder()
-            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/63.0.3239.108")
+            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .timeout(Duration::new(60, 0))
             .build()?
             .post(format!(
@@ -318,7 +325,7 @@ impl BiliBili {
     /// 查询视频的 json 信息
     pub async fn video_data(&self, vid: &Vid) -> Result<Value> {
         let res: ResponseData = reqwest::Client::builder()
-            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/63.0.3239.108")
+            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .timeout(Duration::new(60, 0))
             .build()?
             .get(format!(
@@ -450,7 +457,7 @@ impl BiliBili {
         jar.add_cookie_str(&cookie, &url);
 
         let res: ResponseData = reqwest::Client::builder()
-            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/63.0.3239.108")
+            .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .cookie_provider(std::sync::Arc::new(jar))
             .timeout(Duration::new(60, 0))
             .build()?

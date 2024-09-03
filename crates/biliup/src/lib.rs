@@ -19,8 +19,8 @@ where
     F: FnMut() -> Fut,
     Fut: Future<Output = Result<O, E>>,
 {
-    let mut retries = 3;
-    let mut wait = 1;
+    let mut retries = 10;
+    let mut wait = 0.5;
     let mut jittered_wait_for;
     loop {
         match f().await {
@@ -28,15 +28,15 @@ where
                 retries -= 1;
                 let jitter_factor =
                     UniformFloat::<f64>::sample_single(0., 1., &mut rand::thread_rng());
-                wait *= 2;
 
                 jittered_wait_for = f64::min(jitter_factor + (wait as f64), 64.);
                 info!(
                     "Retry attempt #{}. Sleeping {:?} before the next attempt. {e}",
-                    3 - retries,
+                    10 - retries,
                     jittered_wait_for
                 );
                 sleep(Duration::from_secs_f64(jittered_wait_for)).await;
+                wait *= 2.0;
             }
             res => break res,
         }
