@@ -300,10 +300,14 @@ impl BiliBili {
     }
 
     pub async fn edit(&self, studio: &Studio) -> Result<serde_json::Value> {
-        let ret: serde_json::Value = reqwest::Client::builder()
+        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(3);
+        let client = reqwest::Client::builder()
             .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .timeout(Duration::new(60, 0))
-            .build()?
+            .build()?;
+        let ret: serde_json::Value = ClientBuilder::new(client)
+            .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+            .build()
             .post(format!(
                 "http://member.bilibili.com/x/vu/client/edit?access_key={}",
                 self.login_info.token_info.access_token
