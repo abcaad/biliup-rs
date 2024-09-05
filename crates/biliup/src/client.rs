@@ -25,7 +25,9 @@ impl StatelessClient {
             .connect_timeout(Duration::from_secs(60))
             .build()
             .unwrap();
-        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(10);
+        let retry_policy = ExponentialBackoff::builder()
+            .retry_bounds(Duration::from_secs(5), Duration::from_secs(90))
+            .build_with_max_retries(12);
         let client_with_middleware = ClientBuilder::new(client.clone())
             // Retry failed requests.
             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
