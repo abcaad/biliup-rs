@@ -53,6 +53,10 @@ pub enum Commands {
         #[arg(long, default_value = "3")]
         limit: usize,
 
+        /// 连接超时时间
+        #[arg(long, default_value = "60")]
+        connect_timeout: usize,
+
         #[command(flatten)]
         studio: Studio,
 
@@ -77,6 +81,10 @@ pub enum Commands {
         /// 单视频文件最大并发数
         #[arg(long, default_value = "3")]
         limit: usize,
+
+        /// 连接超时时间
+        #[arg(long, default_value = "60")]
+        connect_timeout: usize,
 
         #[command(flatten)]
         studio: Studio,

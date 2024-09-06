@@ -52,9 +52,10 @@ async fn main() -> Result<()> {
             config: None,
             line,
             limit,
+            connect_timeout,
             studio,
             submit,
-        } => upload_by_command(studio, cli.user_cookie, video_path, line, limit, submit).await?,
+        } => upload_by_command(studio, cli.user_cookie, video_path, line, limit, connect_timeout, submit).await?,
         Commands::Upload {
             video_path: _,
             config: Some(config),
@@ -65,8 +66,9 @@ async fn main() -> Result<()> {
             vid,
             line,
             limit,
+            connect_timeout,
             studio: _,
-        } => append(cli.user_cookie, vid, video_path, line, limit).await?,
+        } => append(cli.user_cookie, vid, video_path, line, limit, connect_timeout).await?,
         Commands::Show { vid } => show(cli.user_cookie, vid).await?,
         Commands::DumpFlv { file_name } => generate_json(file_name)?,
         Commands::Download {

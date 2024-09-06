@@ -18,11 +18,19 @@ pub struct StatelessClient {
 
 impl StatelessClient {
     pub fn new(headers: HeaderMap) -> Self {
+        Self::build(headers, 60)
+    }
+
+    pub fn build_with_timeout(connect_timeout: usize) -> Self {
+        Self::build(header::HeaderMap::new(), connect_timeout)
+    }
+
+    pub fn build(headers: HeaderMap, connect_timeout: usize) -> Self {
         let client = reqwest::Client::builder()
             .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
             .default_headers(headers)
             // .timeout(Duration::new(60, 0))
-            .connect_timeout(Duration::from_secs(60))
+            .connect_timeout(Duration::from_secs(connect_timeout as u64))
             .build()
             .unwrap();
         let retry_policy = ExponentialBackoff::builder()

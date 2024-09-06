@@ -70,6 +70,7 @@ pub async fn upload_by_command(
     video_path: Vec<PathBuf>,
     line: Option<UploadLine>,
     limit: usize,
+    connect_timeout: usize,
     submit: SubmitOption,
 ) -> Result<()> {
     let bili = login_by_cookies(user_cookie).await?;
@@ -81,7 +82,7 @@ pub async fn upload_by_command(
             .unwrap();
     }
     cover_up(&mut studio, &bili).await?;
-    studio.videos = upload(&video_path, &bili, line, limit).await?;
+    studio.videos = upload(&video_path, &bili, line, limit, connect_timeout).await?;
 
     // if studio.submit_by_app {
     //     bili.submit_by_app(&studio).await?;
@@ -121,6 +122,7 @@ pub async fn upload_by_config(config: PathBuf, user_cookie: PathBuf) -> Result<(
                 .as_ref()
                 .and_then(|l| UploadLine::from_str(l, true).ok()),
             config.limit,
+            config.connect_timeout,
         )
         .await?;
         bilibili.submit(&studio).await?;
@@ -134,9 +136,10 @@ pub async fn append(
     video_path: Vec<PathBuf>,
     line: Option<UploadLine>,
     limit: usize,
+    connect_timeout: usize,
 ) -> Result<()> {
     let bilibili = login_by_cookies(user_cookie).await?;
-    let mut uploaded_videos = upload(&video_path, &bilibili, line, limit).await?;
+    let mut uploaded_videos = upload(&video_path, &bilibili, line, limit, connect_timeout).await?;
     let mut studio = bilibili.studio_data(&vid).await?;
     studio.videos.append(&mut uploaded_videos);
     bilibili.edit(&studio).await?;
@@ -213,10 +216,11 @@ pub async fn upload(
     bili: &BiliBili,
     line: Option<UploadLine>,
     limit: usize,
+    connect_timeout: usize,
 ) -> Result<Vec<Video>> {
     info!("number of concurrent futures: {limit}");
     let mut videos = Vec::new();
-    let client = StatelessClient::default();
+    let client = StatelessClient::build_with_timeout(connect_timeout);
     let line = match line {
         Some(UploadLine::Bda2) => line::bda2(),
         Some(UploadLine::Ws) => line::ws(),
@@ -233,7 +237,7 @@ pub async fn upload(
     };
     // let line = line::kodo();
     for video_path in video_path {
-        info!("{line:?}");
+        info!("{line:?}, connect_timeout: {connect_timeout}");
         let video_file = VideoFile::new(video_path)
             .with_context(|| format!("file {}", video_path.to_string_lossy()))?;
         let total_size = video_file.total_size;

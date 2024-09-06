@@ -41,11 +41,17 @@ pub struct Config {
     pub line: Option<String>,
     #[serde(default = "default_limit")]
     pub limit: usize,
+    #[serde(default = "default_connect_timeout")]
+    pub connect_timeout: usize,
     pub streamers: HashMap<String, Studio>,
 }
 
 fn default_limit() -> usize {
     3
+}
+
+fn default_connect_timeout() -> usize {
+    60
 }
 
 pub fn load_config(config: &Path) -> error::Result<Config> {
